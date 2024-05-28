@@ -20,6 +20,7 @@ extension Movie {
     @NSManaged public var duration: Int16
     @NSManaged public var year: Int16
     @NSManaged public var rating: Double
+    @NSManaged public var emotions: String?
     @NSManaged public var toCategory: Category?
 
 }

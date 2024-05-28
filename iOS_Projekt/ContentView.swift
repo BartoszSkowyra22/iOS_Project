@@ -5,17 +5,16 @@
 //  Created by Bartosz Skowyra on 28/05/2024.
 //
 
+//MARK: Walidacja edycji - zapis tylko, gdy są wszystkie dane wypełnione, zmiana kategorii, walidacja roku i czasu
+//MARK: Dodać odświeżanie stron po edycji
+//MARK: Porozrzucać na pliki
+//MARK: Zmienić przycisk zapisu
+//MARK: Po zapisaniu przechodzi do innego widoku
+
 import SwiftUI
 import CoreData
 
 struct ContentView: View {
-    //    @Environment(\.managedObjectContext) private var viewContext
-    //
-    //    @FetchRequest(
-    //        sortDescriptors: [NSSortDescriptor(keyPath: \Item.timestamp, ascending: true)],
-    //        animation: .default)
-    //    private var items: FetchedResults<Item>
-    
     @Environment(\.managedObjectContext) private var viewContext
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Movie.name, ascending: true)], animation: .default)
@@ -28,18 +27,41 @@ struct ContentView: View {
     @State private var movieYear: String = ""
     @State private var movieDuration: String = ""
     @State private var movieRating: Double = 0
+    @State private var movieEmotions: String = ""
     @State private var selectedCategory: Category?
-    //KONIEC przeklejonego
+    
+    
+    @State private var yearError: String = ""
+    @State private var durationError: String = ""
+    @State private var isYearCorrect: Bool = true
+    @State private var isDurationCorrect: Bool = true
     
     var body: some View {
         NavigationView {
             VStack {
                 Form {
                     TextField("Nazwa Filmu", text: $movieName)
+                    
                     TextField("Rok Premiery", text: $movieYear)
                         .keyboardType(.numberPad)
+                        .onChange(of: movieYear, initial: false) {
+                            validateYear()
+                        }
+                    
+                    if !yearError.isEmpty {
+                        Text(yearError).foregroundColor(.red)
+                    }
                     TextField("Czas Trwania", text: $movieDuration)
                         .keyboardType(.numberPad)
+                        .onChange(of: movieDuration, initial: false) {
+                            validateDuration()
+                        }
+                    
+                    if !durationError.isEmpty {
+                        Text(durationError).foregroundColor(.red)
+                    }
+                    
+                    
                     VStack {
                         HStack {
                             Text("Ocena: \(String(format: "%.1f", movieRating))")
@@ -60,8 +82,10 @@ struct ContentView: View {
                         }
                     }
                     
-                    Button("Dodaj Film") {
-                        addMovie()
+                    if isYearCorrect && isDurationCorrect {
+                        Button("Dodaj Film") {
+                            addMovie()
+                        }
                     }
                 }
                 
@@ -69,10 +93,10 @@ struct ContentView: View {
                     ForEach(categories) { category in
                         Section(header: Text("\(category.name ?? "Nieznane")")) {
                             ForEach(category.moviesArray) { movie in
-                                NavigationLink(destination: EditMovieView(movie: movie)) {
-                                    //MARK: Poprawić wyświetlanie
-                                    Text("\(movie.name ?? "Nieznane") - powstał w \(movie.year)")
+                                NavigationLink(destination: MovieView(movie: movie)) {
+                                    Text("\(movie.emotions ?? "") \(movie.name ?? "Nieznane")")
                                 }
+                                
                             }
                             .onDelete(perform: deleteMovie)
                         }
@@ -85,6 +109,26 @@ struct ContentView: View {
                     }
                 }
             }
+        }
+    }
+    
+    private func validateYear() {
+        if let year = Int(movieYear), year >= 1900, year <= 2024 {
+            yearError = ""
+            isYearCorrect = true
+        } else {
+            yearError = "Rok premiery musi być liczbą z przedziału 1900-2024"
+            isYearCorrect = false
+        }
+    }
+    
+    private func validateDuration() {
+        if let duration = Int(movieDuration), duration >= 1, duration <= 200 {
+            durationError = ""
+            isDurationCorrect = true
+        } else {
+            durationError = "Czas trwania musi być liczbą w przedziale 1-200"
+            isDurationCorrect = false
         }
     }
     
@@ -127,7 +171,7 @@ struct ContentView: View {
     }
     
     private func addCategory() {
-        let categories = ["Komedia", "Film romantyczny", "Film akcji", "Horror"]
+        let categories = ["Kreskówka", "Film romantyczny", "Film akcji", "Horror"]
         for categoryName in categories {
             let newCategory = Category(context: viewContext)
             newCategory.name = categoryName

@@ -18,14 +18,14 @@ extension Category {
 
     @NSManaged public var name: String?
     @NSManaged public var toMovie: NSSet?
-
     
-    public var dogArray: [Movie] {
-           let set = toMovie as? Set<Movie> ?? []
-           return set.sorted{
-               $0.name! < $1.name!
-           }
-   }
+    public var movieArray: [Movie] {
+               let set = toMovie as? Set<Movie> ?? []
+               return set.sorted{
+                   $0.name! < $1.name!
+               }
+       }
+
 }
 
 // MARK: Generated accessors for toMovie
