@@ -34,8 +34,6 @@ struct EditMovieView: View {
     
     var body: some View {
         VStack{
-            //MARK: Walidacja edycji - zmiana kategorii
-            //MARK: Zapisywanie emotek
             //MARK: Porozrzucać na pliki
             Text("Podaj nową nazwę filmu:")
             TextField("\(movie.name ?? "Brak nazwy")", text: $editMovieName)
@@ -73,7 +71,7 @@ struct EditMovieView: View {
             }
             
             Picker("Kategoria", selection: $editSelectedCategory) {
-                //Text("Wybierz").tag(nil as Category?)
+                
                 ForEach(categories, id: \.self) { category in
                     Text(category.name ?? "Nieznane").tag(category as Category?)
                 }

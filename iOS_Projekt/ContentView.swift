@@ -55,7 +55,6 @@ struct ContentView: View {
                         Text(durationError).foregroundColor(.red)
                     }
                     
-                    
                     VStack {
                         HStack {
                             Text("Ocena: \(String(format: "%.1f", movieRating))")

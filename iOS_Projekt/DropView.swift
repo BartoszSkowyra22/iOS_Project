@@ -15,7 +15,7 @@ struct DropView: View {
         
         
         VStack {
-            Text("Twoje emocje (\(dropItems.count))")
+            Text("Twoje odczucie: ")
                 .font(.system(size: 20))
                 .padding()
             
@@ -32,10 +32,6 @@ struct DropView: View {
                             }
                     }
                     .onDelete(perform: removeRows)
-                    .dropDestination(for: String.self) { droppedItem, location in
-                        dropItems += droppedItem
-                        
-                    }
                 }
             }
             .padding()

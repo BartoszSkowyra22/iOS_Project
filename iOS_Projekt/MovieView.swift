@@ -12,10 +12,13 @@ struct MovieView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \Movie.name, ascending: true)], animation: .default)
     
-    private var movies: FetchedResults<Movie>
+    
+    private var categories: FetchedResults<Category>
+    
     var movie:Movie
     
     
+    //    @State var dropItems: [String] = []
     @State var dropItems: [String] = []
     @State var items: [String] = DraggableItemModel.items
     
@@ -52,16 +55,34 @@ struct MovieView: View {
                 
                 DropView(dropItems: $dropItems)
                     .dropDestination(for: String.self) { droppedItem, location in
-                        dropItems += droppedItem
+                        if dropItems.isEmpty {
+                            dropItems += droppedItem
+                        } else {
+                            dropItems = droppedItem
+                        }
+                        saveChangesInDropView()
                         return true
                     }
             }
             .padding()
             .onAppear(){
                 viewContext.refreshAllObjects()
+                if movie.emotions != nil {
+                    dropItems.append(movie.emotions ?? "")
+                }
             }
         }
         
+    }
+    
+    private func saveChangesInDropView(){
+        movie.emotions = dropItems.first
+        do {
+            try self.viewContext.save()
+        } catch {
+            let nsError = error as NSError
+            fatalError("Nierozpoznany błąd \(nsError), \(nsError.userInfo)")
+        }
     }
     
     private func categoryImage(for categoryName: String) -> Image {
