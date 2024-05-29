@@ -10,13 +10,13 @@ import CoreData
 
 struct ContentView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Movie.name, ascending: true)], animation: .default)
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \Movie.name, ascending: true)], animation: .default)
     private var movies: FetchedResults<Movie>
     
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \Category.name, ascending: true)], animation: .default)
     private var categories: FetchedResults<Category>
     
+    //Zmienne danych aplikacji
     @State private var movieName: String = ""
     @State private var movieYear: String = ""
     @State private var movieDuration: String = ""
@@ -24,7 +24,7 @@ struct ContentView: View {
     @State private var movieEmotions: String = ""
     @State private var selectedCategory: Category?
     
-    
+    //Zmienne sterujące
     @State private var yearError: String = ""
     @State private var durationError: String = ""
     @State private var isYearCorrect: Bool = true
@@ -33,6 +33,7 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             VStack {
+                //Formularz dodwania nowego filmu i kategorii
                 Form {
                     TextField("Nazwa Filmu", text: $movieName)
                     
@@ -41,16 +42,15 @@ struct ContentView: View {
                         .onChange(of: movieYear, initial: true) {
                             validateYear()
                         }
-                    
                     if !yearError.isEmpty {
                         Text(yearError).foregroundColor(.red)
                     }
+                    
                     TextField("Czas Trwania", text: $movieDuration)
                         .keyboardType(.numberPad)
                         .onChange(of: movieDuration, initial: true) {
                             validateDuration()
                         }
-                    
                     if !durationError.isEmpty {
                         Text(durationError).foregroundColor(.red)
                     }
@@ -63,12 +63,12 @@ struct ContentView: View {
                         Slider(value: $movieRating, in: 0...10, step: 0.1)
                     }
                     
+                    
                     if categories.count == 0 {
                         Button("Dodaj Kategorie") {
                             addCategory()
                         }
                     }
-                    
                     Picker("Kategoria", selection: $selectedCategory) {
                         Text("Wybierz").tag(nil as Category?)
                         ForEach(categories, id: \.self) { category in
@@ -83,6 +83,7 @@ struct ContentView: View {
                     }
                 }
                 
+                // Wylistowanie wszystkich filmów w bazie
                 List {
                     ForEach(categories) { category in
                         Section(header: Text("\(category.name ?? "Nieznane")")) {
@@ -95,12 +96,14 @@ struct ContentView: View {
                             .onDelete(perform: deleteMovie)
                         }
                     }
+                    // Odświeżenie danych
                     .onAppear(){
                         viewContext.refreshAllObjects()
                     }
                 }
                 .navigationTitle("Filmy")
                 .toolbar {
+                    //Przycisk do edycji
                     ToolbarItem(placement: .navigationBarTrailing) {
                         EditButton()
                     }

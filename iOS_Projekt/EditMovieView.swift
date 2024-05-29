@@ -18,13 +18,15 @@ struct EditMovieView: View {
     private var categories: FetchedResults<Category>
     
     var movie:Movie
+    
+    // Zmienne aplikacji
     @State var editMovieName: String = ""
     @State var editMovieYear: String = ""
     @State var editMovieDuration: String = ""
     @State var editMovieRating: Double = 0
     @State private var editSelectedCategory: Category?
     
-    
+    // Zmienne sterujące
     @State private var yearError: String = ""
     @State private var durationError: String = ""
     @State private var isYearCorrect: Bool = true
@@ -33,8 +35,9 @@ struct EditMovieView: View {
     
     
     var body: some View {
+        
+        // Sekcja edycji danych filmu
         VStack{
-            //MARK: Porozrzucać na pliki
             Text("Podaj nową nazwę filmu:")
             TextField("\(movie.name ?? "Brak nazwy")", text: $editMovieName)
                 .font(.system(size: 20))
@@ -45,7 +48,6 @@ struct EditMovieView: View {
                 .onChange(of: editMovieYear, initial: false) {
                     validateYear()
                 }
-            
             if !isYearCorrect {
                 Text(yearError).foregroundColor(.red)
             }
@@ -56,7 +58,6 @@ struct EditMovieView: View {
                 .onChange(of: editMovieDuration, initial: false) {
                     validateDuration()
                 }
-            
             if !isDurationCorrect {
                 Text(durationError).foregroundColor(.red)
             }
@@ -71,33 +72,31 @@ struct EditMovieView: View {
             }
             
             Picker("Kategoria", selection: $editSelectedCategory) {
-                
                 ForEach(categories, id: \.self) { category in
                     Text(category.name ?? "Nieznane").tag(category as Category?)
                 }
             }
             .pickerStyle(.segmented)
+            //Ustaw Picker po wyświetleniu strony na obecnie ustawioną kategorię
             .onAppear {
                 if editSelectedCategory == nil {
                     editSelectedCategory = movie.toCategory
                 }
             }
             
-            
             if isYearCorrect && isDurationCorrect {
                 Button("Zapisz"){
                     editMovie()
                 }
                 .buttonStyle(.borderedProminent)
+                //Wyświetlenie okienka alertu o zapisaniu
                 .alert(isPresented: $showingAlert) {
                     Alert(
                         title: Text("Zapisano"),
                         dismissButton: .default(Text("OK"))
                     )
                 }
-                
             }
-            
         }
         .padding()
     }
@@ -133,7 +132,6 @@ struct EditMovieView: View {
             showingAlert = true
             yearError = ""
             durationError = ""
-            
         } catch {
             let nsError = error as NSError
             fatalError("Nierozpoznany błąd \(nsError), \(nsError.userInfo)")

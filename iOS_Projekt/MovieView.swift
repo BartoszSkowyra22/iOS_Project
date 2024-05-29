@@ -18,12 +18,13 @@ struct MovieView: View {
     var movie:Movie
     
     
-    //    @State var dropItems: [String] = []
     @State var dropItems: [String] = []
     @State var items: [String] = DraggableItemModel.items
     
     var body: some View {
         VStack{
+            
+            //Wyświetlenie zdjęcia dla kategorii
             if let categoryName = movie.toCategory?.name {
                 categoryImage(for: categoryName)
                     .resizable()
@@ -31,6 +32,8 @@ struct MovieView: View {
                     .frame(height: 200)
             }
             Spacer()
+            
+            //Wyświetlenie danych filmu
             Text("Nazwa filmu: \(movie.name ?? "Brak nazwy")")
                 .font(.system(size: 23))
             Text("Kategoria: \(movie.toCategory?.name ?? "Brak kategorii")")
@@ -40,6 +43,8 @@ struct MovieView: View {
             NavigationLink(destination: EditMovieView(movie: movie)) {
                 Text("Edytuj dane")
             }
+            
+            //Sekcja dodawania emocji po obejrzeniu filmu
             VStack {
                 HStack {
                     ForEach(items, id: \.self) { item in
@@ -65,14 +70,18 @@ struct MovieView: View {
                     }
             }
             .padding()
+            // Odświeżenie danych i załadowanie informacji o emocjach
             .onAppear(){
                 viewContext.refreshAllObjects()
-                if movie.emotions != nil {
-                    dropItems.append(movie.emotions ?? "")
-                }
+                setEmotionsFromCoreData()
             }
         }
-        
+    }
+    
+    private func setEmotionsFromCoreData(){
+        if movie.emotions != nil {
+            dropItems.append(movie.emotions ?? "")
+        }
     }
     
     private func saveChangesInDropView(){
