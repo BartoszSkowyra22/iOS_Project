@@ -5,12 +5,6 @@
 //  Created by Bartosz Skowyra on 28/05/2024.
 //
 
-//MARK: Walidacja edycji - zapis tylko, gdy są wszystkie dane wypełnione, zmiana kategorii, walidacja roku i czasu
-//MARK: Dodać odświeżanie stron po edycji
-//MARK: Porozrzucać na pliki
-//MARK: Zmienić przycisk zapisu
-//MARK: Po zapisaniu przechodzi do innego widoku
-
 import SwiftUI
 import CoreData
 
@@ -44,7 +38,7 @@ struct ContentView: View {
                     
                     TextField("Rok Premiery", text: $movieYear)
                         .keyboardType(.numberPad)
-                        .onChange(of: movieYear, initial: false) {
+                        .onChange(of: movieYear, initial: true) {
                             validateYear()
                         }
                     
@@ -53,7 +47,7 @@ struct ContentView: View {
                     }
                     TextField("Czas Trwania", text: $movieDuration)
                         .keyboardType(.numberPad)
-                        .onChange(of: movieDuration, initial: false) {
+                        .onChange(of: movieDuration, initial: true) {
                             validateDuration()
                         }
                     
@@ -70,15 +64,16 @@ struct ContentView: View {
                         Slider(value: $movieRating, in: 0...10, step: 0.1)
                     }
                     
+                    if categories.count == 0 {
+                        Button("Dodaj Kategorie") {
+                            addCategory()
+                        }
+                    }
+                    
                     Picker("Kategoria", selection: $selectedCategory) {
                         Text("Wybierz").tag(nil as Category?)
                         ForEach(categories, id: \.self) { category in
                             Text(category.name ?? "Nieznane").tag(category as Category?)
-                        }
-                    }
-                    if categories.count == 0 {
-                        Button("Dodaj Kategorie") {
-                            addCategory()
                         }
                     }
                     
@@ -100,6 +95,9 @@ struct ContentView: View {
                             }
                             .onDelete(perform: deleteMovie)
                         }
+                    }
+                    .onAppear(){
+                        viewContext.refreshAllObjects()
                     }
                 }
                 .navigationTitle("Filmy")

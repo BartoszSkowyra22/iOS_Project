@@ -12,32 +12,31 @@ import CoreData
 struct EditMovieView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \Movie.name, ascending: true)], animation: .default)
-    
     private var movies: FetchedResults<Movie>
+    
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \Category.name, ascending: true)], animation: .default)
+    private var categories: FetchedResults<Category>
+    
     var movie:Movie
     @State var editMovieName: String = ""
     @State var editMovieYear: String = ""
     @State var editMovieDuration: String = ""
     @State var editMovieRating: Double = 0
+    @State private var editSelectedCategory: Category?
     
     
-    //    Text("Nazwa filmu: \(movie.name ?? "Brak nazwy")")
-    //        .font(.system(size: 23))
-    //    Text("Kategoia: \(movie.toCategory?.name ?? "Brak kategorii")")
-    //    Text("Rok premiery: \(movie.year)")
-    //    Text("Czas trwania: \(movie.duration) minut ")
-    //    Text("Ocena: \(String(format: "%.1f", movie.rating))")
-    //    NavigationLink(destination: EditMovieView(movie: movie)) {
-    //        Text("Edytuj dane")
-    //    }
+    @State private var yearError: String = ""
+    @State private var durationError: String = ""
+    @State private var isYearCorrect: Bool = true
+    @State private var isDurationCorrect: Bool = true
+    @State private var showingAlert = false
+    
     
     var body: some View {
         VStack{
-            //MARK: Walidacja edycji - zapis tylko, gdy są wszystkie dane wypełnione, zmiana kategorii, walidacja roku i czasu
-            //MARK: Dodać odświeżanie stron po edycji
+            //MARK: Walidacja edycji - zmiana kategorii
+            //MARK: Zapisywanie emotek
             //MARK: Porozrzucać na pliki
-            //MARK: Zmienić przycisk zapisu
-            //MARK: Po zapisaniu przechodzi do innego widoku
             Text("Podaj nową nazwę filmu:")
             TextField("\(movie.name ?? "Brak nazwy")", text: $editMovieName)
                 .font(.system(size: 20))
@@ -45,12 +44,24 @@ struct EditMovieView: View {
             Text("Podaj nowy rok premiery")
             TextField("\(movie.year)", text: $editMovieYear)
                 .keyboardType(.numberPad)
-                .font(.system(size: 20))
+                .onChange(of: editMovieYear, initial: false) {
+                    validateYear()
+                }
+            
+            if !isYearCorrect {
+                Text(yearError).foregroundColor(.red)
+            }
             
             Text("Podaj nowy czas trwania")
             TextField("\(movie.duration)", text: $editMovieDuration)
                 .keyboardType(.numberPad)
-                .font(.system(size: 20))
+                .onChange(of: editMovieDuration, initial: false) {
+                    validateDuration()
+                }
+            
+            if !isDurationCorrect {
+                Text(durationError).foregroundColor(.red)
+            }
             
             Text("Podaj nową ocenę (poprzednia: \(String(format: "%.1f", movie.rating)))")
             VStack {
@@ -60,27 +71,95 @@ struct EditMovieView: View {
                 }
                 Slider(value: $editMovieRating, in: 0...10, step: 0.1)
             }
-            //            TextField("\(String(format: "%.1f", movie.rating))", text: $editMovieRating)
-            //                .keyboardType(.numberPad)
-            //                .font(.system(size: 20))
             
-            Button(action: ({
-                movie.name = self.editMovieName
-                movie.year = Int16(self.editMovieYear) ?? 0
-                movie.duration = Int16(self.editMovieDuration) ?? 0
-                movie.rating = Double(self.editMovieRating)
-                //MARK: Edycja kategorii
-                do {
-                    try self.viewContext.save()
-                } catch {
-                    let nsError = error as NSError
-                    fatalError("Nierozpoznany błąd \(nsError), \(nsError.userInfo)")
+            Picker("Kategoria", selection: $editSelectedCategory) {
+                //Text("Wybierz").tag(nil as Category?)
+                ForEach(categories, id: \.self) { category in
+                    Text(category.name ?? "Nieznane").tag(category as Category?)
                 }
-            })) {
-                Text("Zapisz")
+            }
+            .pickerStyle(.segmented)
+            .onAppear {
+                if editSelectedCategory == nil {
+                    editSelectedCategory = movie.toCategory
+                }
+            }
+            
+            
+            if isYearCorrect && isDurationCorrect {
+                Button("Zapisz"){
+                    editMovie()
+                }
+                .buttonStyle(.borderedProminent)
+                .alert(isPresented: $showingAlert) {
+                    Alert(
+                        title: Text("Zapisano"),
+                        dismissButton: .default(Text("OK"))
+                    )
+                }
+                
             }
             
         }
         .padding()
+    }
+    
+    private func editMovie() {
+        
+        if self.editMovieName != ""{
+            movie.name = self.editMovieName
+        }
+        
+        if self.editMovieYear != "" {
+            movie.year = Int16(self.editMovieYear) ?? 0
+        }
+        
+        if self.editMovieDuration != "" {
+            movie.duration = Int16(self.editMovieDuration) ?? 0
+        }
+        
+        if self.editMovieRating != 0 {
+            movie.rating = Double(self.editMovieRating)
+        }
+        
+        if self.editSelectedCategory != movie.toCategory {
+            movie.toCategory = self.editSelectedCategory
+        }
+        
+        
+        do {
+            try self.viewContext.save()
+            
+            isYearCorrect = true
+            isDurationCorrect = true
+            showingAlert = true
+            yearError = ""
+            durationError = ""
+            
+        } catch {
+            let nsError = error as NSError
+            fatalError("Nierozpoznany błąd \(nsError), \(nsError.userInfo)")
+        }
+    }
+    
+    
+    private func validateYear() {
+        if let year = Int(editMovieYear), year >= 1900, year <= 2024 {
+            yearError = ""
+            isYearCorrect = true
+        } else {
+            yearError = "Rok premiery musi być liczbą z przedziału 1900-2024"
+            isYearCorrect = false
+        }
+    }
+    
+    private func validateDuration() {
+        if let duration = Int(editMovieDuration), duration >= 1, duration <= 200 {
+            durationError = ""
+            isDurationCorrect = true
+        } else {
+            durationError = "Czas trwania musi być liczbą w przedziale 1-200"
+            isDurationCorrect = false
+        }
     }
 }
